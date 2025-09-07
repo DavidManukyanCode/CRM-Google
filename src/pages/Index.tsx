@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { CRMHeader } from '@/components/CRMHeader';
 import { UserCard } from '@/components/UserCard';
+import { FilterPanel, FilterOptions } from '@/components/FilterPanel';
 import { mockUsers, mockLabels, User, Label } from '@/data/mockUsers';
 import { toast } from '@/hooks/use-toast';
 
@@ -9,20 +10,80 @@ const Index = () => {
   const [labels, setLabels] = useState<Label[]>(mockLabels);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FilterOptions>({
+    status: [],
+    labels: [],
+    company: '',
+    role: '',
+    dateRange: { from: '', to: '' }
+  });
 
-  // Filter users based on search term
+  // TODO: Backend Integration - Replace with API call
+  // const fetchUsers = async () => {
+  //   const response = await api.getUsers({ search: searchTerm, filters });
+  //   setUsers(response.data);
+  // };
+
+  // Advanced filtering logic
   const filteredUsers = useMemo(() => {
-    if (!searchTerm) return users;
-    
-    return users.filter(user => 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.labels.some(label => label.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [users, searchTerm]);
+    let filtered = users;
+
+    // Search term filter
+    if (searchTerm) {
+      filtered = filtered.filter(user => 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.labels.some(label => label.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    // Status filter
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(user => filters.status.includes(user.status));
+    }
+
+    // Labels filter
+    if (filters.labels.length > 0) {
+      filtered = filtered.filter(user => 
+        user.labels.some(label => filters.labels.includes(label.id))
+      );
+    }
+
+    // Company filter
+    if (filters.company) {
+      filtered = filtered.filter(user => 
+        user.company.toLowerCase().includes(filters.company.toLowerCase())
+      );
+    }
+
+    // Role filter
+    if (filters.role) {
+      filtered = filtered.filter(user => 
+        user.role.toLowerCase().includes(filters.role.toLowerCase())
+      );
+    }
+
+    // Date range filter
+    if (filters.dateRange.from || filters.dateRange.to) {
+      filtered = filtered.filter(user => {
+        const userDate = new Date(user.lastContact);
+        const fromDate = filters.dateRange.from ? new Date(filters.dateRange.from) : null;
+        const toDate = filters.dateRange.to ? new Date(filters.dateRange.to) : null;
+
+        if (fromDate && userDate < fromDate) return false;
+        if (toDate && userDate > toDate) return false;
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [users, searchTerm, filters]);
 
   const handleAddUser = () => {
+    // TODO: Backend Integration - API call to create user
+    // const newUser = await api.createUser(userData);
+    // setUsers([...users, newUser]);
     toast({
       title: "Add User",
       description: "User creation form would open here. Backend integration needed.",
@@ -30,6 +91,9 @@ const Index = () => {
   };
 
   const handleEditUser = (user: User) => {
+    // TODO: Backend Integration - API call to update user
+    // const updatedUser = await api.updateUser(user.id, userData);
+    // setUsers(users.map(u => u.id === user.id ? updatedUser : u));
     toast({
       title: "Edit User",
       description: `Editing ${user.name}. Integration with user management system needed.`,
@@ -38,6 +102,8 @@ const Index = () => {
 
   const handleDeleteUser = (userId: string) => {
     const user = users.find(u => u.id === userId);
+    // TODO: Backend Integration - API call to delete user
+    // await api.deleteUser(userId);
     setUsers(users.filter(u => u.id !== userId));
     toast({
       title: "User Deleted",
@@ -47,6 +113,8 @@ const Index = () => {
   };
 
   const handleUpdateLabels = (userId: string, newLabels: Label[]) => {
+    // TODO: Backend Integration - API call to update user labels
+    // await api.updateUserLabels(userId, newLabels);
     setUsers(users.map(user => 
       user.id === userId 
         ? { ...user, labels: newLabels }
@@ -68,10 +136,13 @@ const Index = () => {
 
   const handleToggleFilters = () => {
     setShowFilters(!showFilters);
-    toast({
-      title: "Filters",
-      description: "Advanced filtering options would be implemented here.",
-    });
+  };
+
+  const handleFiltersChange = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+    // TODO: Backend Integration - Send filter parameters to API
+    // const filteredUsers = await api.getUsers({ search: searchTerm, filters: newFilters });
+    // setUsers(filteredUsers);
   };
 
   return (
@@ -115,6 +186,14 @@ const Index = () => {
           </div>
         )}
       </main>
+
+      <FilterPanel
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        availableLabels={labels}
+      />
     </div>
   );
 };
