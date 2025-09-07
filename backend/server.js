@@ -8,6 +8,7 @@ import sqlite3 from 'sqlite3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -250,6 +251,7 @@ app.get('/api/users', (req, res) => {
   });
 });
 
+
 // Get single user
 app.get('/api/users/:id', (req, res) => {
   const { id } = req.params;
@@ -455,4 +457,11 @@ process.on('SIGINT', () => {
     }
     process.exit(0);
   });
+});
+
+// Serve frontend build
+app.use(express.static(path.join(__dirname, '..', 'dist')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
